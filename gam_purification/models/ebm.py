@@ -1,13 +1,10 @@
 import numpy as np
 
-
 from gam_purification.utils import calc_density, get_feat_vals, plot_interaction
 
 
-# TODO: Move these functions into the purify repo and just export them here?
-
 def purify_ebm_uniform(ebm_global, dataset_name,
-                        X_means=None, X_stds=None, should_transpose=True):
+                    X_means=None, X_stds=None, should_transpose=True):
     return purify_ebm(ebm_global, False, dataset_name, "uniform",
         X_train=None, X_means=X_means, X_stds=X_stds, should_transpose=should_transpose)
 
@@ -51,7 +48,6 @@ def purify_ebm(ebm_global, use_density, dataset_name, move_name,
                 pairs[my_key] = my_data['scores'].copy().T
                 print("{} were transposed".format(my_key))
 
-
     return purify_all(mains, pairs, ebm_global, use_density,
         dataset_name, "ebm", move_name, X_train, X_means, X_stds, laplace)
 
@@ -90,7 +86,7 @@ def purify_all(mains, pairs, ebm_global, use_density,
     mains_moved = {}
     pairs_moved = {}
     intercept = 0.
-    id_for_feat_name = lambda x: get_id_for_feat_name(x, ebm_global)
+    #id_for_feat_name = lambda x: get_id_for_feat_name(x, ebm_global)
 
     for feat_id, vals in mains.items():
         mains_moved[feat_id] = vals.copy()
@@ -116,8 +112,10 @@ def purify_all(mains, pairs, ebm_global, use_density,
                     vals, pairs_moved[(feat_id1, feat_id2)],
                     dataset_name, feat_name1, feat_name2, model_name, move_name)
 
-    return {"mains": mains,
+    return {
+        "mains": mains,
         "mains_moved": mains_moved,
         "pairs": pairs,
         "pairs_moved": pairs_moved,
-        "intercept": intercept}
+        "intercept": intercept
+    }
