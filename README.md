@@ -4,6 +4,13 @@ Utilities for purifying Generalized Additive Models (GAMs) with interaction effe
 
 More details in [Purifying Interaction Effects with the Functional ANOVA: An Efficient Algorithm for Recovering Identifiable Additive Models](http://proceedings.mlr.press/v108/lengerich20a.html).
 
+## Installing
+```
+pip install git+https://github.com/blengerich/gam_purification.git
+```
+
+
+## Citing
 If you use these methods, please cite:
 ```
 @InProceedings{pmlr-v108-lengerich20a,
