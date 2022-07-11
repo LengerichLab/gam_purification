@@ -1,8 +1,9 @@
 import numpy as np
 
-from gam_purification.utils import calc_density, get_feat_vals, plot_interaction
+from gam_purification.purify import purify
+from gam_purification.utils import calc_density, get_feat_vals, plot_interaction, overlap, merge_arrs
 
-
+# TODO: Should we return new bins for mains or just smash them together?
 def purify_ebm_uniform(ebm_global, dataset_name,
                     X_means=None, X_stds=None, should_transpose=True):
     return purify_ebm(ebm_global, False, dataset_name, "uniform",
@@ -25,22 +26,22 @@ def purify_ebm_laplace(ebm_global, dataset_name, X_train,
 def purify_ebm(ebm_global, use_density, dataset_name, move_name,
     X_train=None, X_means=None, X_stds=None, laplace=0, should_transpose=True):
     mains = {}
-    pairs = {}
+    pairs, pairs_names = {}, {}
 
     for i, feat_name in enumerate(ebm_global.feature_names):
         my_data = ebm_global.data(i)
         if my_data['type'] == 'univariate':
             feat_id = ebm_global.feature_names.index(feat_name)
             mains[feat_id] = my_data['scores'].copy()
-        elif my_data['type'] == 'pairwise':
+        elif my_data['type'] == 'interaction':
             feat_name1 = feat_name.split(' x ')[0]
             feat_name2 = feat_name.split(' x ')[1]
             feat_id1 = ebm_global.feature_names.index(feat_name1)
             feat_id2 = ebm_global.feature_names.index(feat_name2)
             if feat_id1 < feat_id2:
                 my_key = (feat_id1, feat_id2)
-                #pairs[my_key] = np.flip(my_data['scores'].copy().T, axis=1)
                 pairs[my_key] = my_data['scores'].copy()
+                pairs_names[my_key] = (my_data['left_names'], my_data['right_names'])
                 if should_transpose:
                     pairs[my_key] = pairs[my_key].T
             else:
@@ -48,60 +49,70 @@ def purify_ebm(ebm_global, use_density, dataset_name, move_name,
                 pairs[my_key] = my_data['scores'].copy().T
                 print("{} were transposed".format(my_key))
 
-    return purify_all(mains, pairs, ebm_global, use_density,
+    return purify_all(mains, pairs, pairs_names, ebm_global, use_density,
         dataset_name, "ebm", move_name, X_train, X_means, X_stds, laplace)
 
 
+def add_or_new(d, k, v):
+    try:
+        d[k] += v
+    except KeyError:
+        d[k] = v.copy()
+
 def purify_bivariate(ebm_global, feat_id1, feat_id2, mains_moved, pairs_moved,
-                     new_pair_mat, use_density, laplace, X_train=None):
+                     raw_pair_mat, raw_pair_names, use_density, laplace, X_train=None):
     assert feat_id1 < feat_id2
     feat_vals1 = get_feat_vals(ebm_global, feat_id1)
     feat_vals2 = get_feat_vals(ebm_global, feat_id2)
+    raw_pair_vals1 = raw_pair_names[0]
+    raw_pair_vals2 = raw_pair_names[1]
 
-    density = calc_density(use_density, feat_vals1, feat_vals2,
+    density = calc_density(use_density,
+        raw_pair_vals1[:raw_pair_mat.shape[0]], raw_pair_vals2[:raw_pair_mat.shape[1]],
         feat_id1, feat_id2, X_train, laplace)
-    intercept, m1, m2, pure_mat, n_iters = purify(new_pair_mat,
+    intercept, m1, m2, pure_mat, n_iters = purify(raw_pair_mat,
         densities=density, tol=1e-6)
 
     pairs_moved[(feat_id1, feat_id2)] = pure_mat.copy()
     try:
-        mains_moved[feat_id1] += m1
-    except KeyError:
-        mains_moved[feat_id1] = m1.copy()
+        add_or_new(mains_moved, feat_id1, m1)
+    except ValueError:  # Different binning between main/pair.
+        mapped_m1 = merge_arrs(feat_vals1, raw_pair_vals1, m1)
+        add_or_new(mains_moved, feat_id1, mapped_m1)
     try:
-        mains_moved[feat_id2] += m2
-    except KeyError:
-        mains_moved[feat_id2] = m2.copy()
+        add_or_new(mains_moved, feat_id2, m2)
+    except ValueError:  # Different binning between main/pair.
+        mapped_m2 = merge_arrs(feat_vals2, raw_pair_vals2, m2)
+        add_or_new(mains_moved, feat_id2, mapped_m2)
 
-    return mains_moved, pairs_moved, intercept, feat_vals1, feat_vals2
+    return intercept, mains_moved, pairs_moved, feat_vals1, feat_vals2
 
 
 def get_id_for_feat_name(name, ebm_global):
     return ebm_global.feature_names.index(name)
 
 
-def purify_all(mains, pairs, ebm_global, use_density,
+def purify_all(mains, pairs, pairs_names, ebm_global, use_density,
                dataset_name, model_name, move_name, X_train=None,
                X_means=None, X_stds=None, laplace=0, should_plot=False):
     mains_moved = {}
     pairs_moved = {}
     intercept = 0.
-    #id_for_feat_name = lambda x: get_id_for_feat_name(x, ebm_global)
 
     for feat_id, vals in mains.items():
         mains_moved[feat_id] = vals.copy()
 
     for (feat_id1, feat_id2), vals in pairs.items():
         assert feat_id1 < feat_id2
-        feat_name1 = ebm_global.feature_names[feat_id1]
-        feat_name2 = ebm_global.feature_names[feat_id2]
 
-        mains_moved, pairs_moved, inter, feat_vals1, feat_vals2 = purify_bivariate(
-                ebm_global, feat_id1, feat_id2, mains_moved, pairs_moved, vals.copy(),
-                use_density, laplace, X_train)
+        inter, mains_moved, pairs_moved, feat_vals1, feat_vals2 = purify_bivariate(
+                ebm_global, feat_id1, feat_id2, mains_moved, pairs_moved,
+                vals.copy(), pairs_names[(feat_id1, feat_id2)], use_density, laplace, X_train)
         intercept += inter
 
         if should_plot:
+            feat_name1 = ebm_global.feature_names[feat_id1]
+            feat_name2 = ebm_global.feature_names[feat_id2]
             if X_stds is not None and X_means is not None:
                 plot_interaction(np.array(feat_vals1)*X_stds[feat_id1]+X_means[feat_id1],
                     np.array(feat_vals2)*X_stds[feat_id2]+X_means[feat_id2],

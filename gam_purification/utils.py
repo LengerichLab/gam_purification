@@ -7,7 +7,11 @@ def find_bin(val, ar):
     # Find the first bin which has left index geq the query.
     # The query belongs in the bin to the left of this one.
     # Assumes the bins are right-inclusive.
-    return np.argmin(ar < val)
+    try:
+        return np.argmin(ar < val)
+    except TypeError:
+        return np.argmin([a == val for a in ar])
+    raise NotImplementedError  # comparison between bins of objects that aren't exact is not supported
 
 
 def only_finite(ar):
@@ -15,7 +19,7 @@ def only_finite(ar):
 
 
 def get_feat_vals(ebm_global, feat_id):
-    good_vals = only_finite(np.array(ebm_global.data(feat_id)['names'])).tolist()
+    good_vals = ebm_global.data(feat_id)['names']
     return good_vals
 
 
@@ -30,6 +34,38 @@ def calc_density(use_density, feat_vals1, feat_vals2,
         return density
     else:
         return None
+
+
+def overlap(bounds1, bounds2):
+    assert bounds1[0] < bounds1[1]
+    assert bounds2[0] < bounds2[1]
+    if bounds1[0] == bounds2[0] or bounds1[1] == bounds2[1]:
+        return True
+    if bounds1[0] > bounds2[0]:
+        return bounds1[1] < bounds2[1]
+    else:  # bounds1[0] < bounds2[0]
+        return bounds2[1] < bounds1[1]
+
+
+def merge_arrs(ar1_names, ar2_names, ar2_values):
+    # Preserves the bins of ar1.
+    ar_mapped = np.zeros((len(ar1_names)-1))
+    for i, val in enumerate(ar2_values):
+        raw_left_boundary = val
+        try:
+            raw_right_boundary = ar2_names[i+1]
+        except:
+            raw_right_boundary = np.inf
+
+        for j, left_boundary in enumerate(ar1_names):
+            mapped_left_boundary = left_boundary
+            try:
+                mapped_right_boundary = ar1_names[j+1]
+            except:
+                mapped_right_boundary = np.inf
+            if overlap((raw_left_boundary, raw_right_boundary), (mapped_left_boundary, mapped_right_boundary)):
+                ar_mapped[j] += val
+    return ar_mapped
 
 
 def plot_interaction(val_names1, val_names2,
