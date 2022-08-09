@@ -1,6 +1,11 @@
 # gam_purification
+![pylint Score](pylint.svg)
+![License](https://img.shields.io/github/license/blengerich/gam_purification.svg?style=flat-square)
+![Maintenance](https://img.shields.io/maintenance/yes/2022?style=flat-square)
 
 Utilities for purifying Generalized Additive Models (GAMs) with interaction effects.
+
+
 
 More details in [Purifying Interaction Effects with the Functional ANOVA: An Efficient Algorithm for Recovering Identifiable Additive Models](http://proceedings.mlr.press/v108/lengerich20a.html).
 
