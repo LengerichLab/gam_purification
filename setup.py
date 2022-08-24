@@ -13,5 +13,6 @@ setuptools.setup(name='gam_purification',
           'tensorflow-addons',
           'numpy>=1.19.2',
           'ipywidgets',
+          'interpret'
       ],
 )
