@@ -3,6 +3,13 @@ from mpl_toolkits.axes_grid1 import ImageGrid
 import numpy as np
 
 
+def add_or_new(d, k, v):
+    try:
+        d[k] += v
+    except KeyError:
+        d[k] = v.copy()
+
+
 def find_bin(val, ar):
     # Find the first bin which has left index geq the query.
     # The query belongs in the bin to the left of this one.
@@ -51,7 +58,7 @@ def merge_arrs(ar1_names, ar2_names, ar2_values):
     # Preserves the bins of ar1.
     ar_mapped = np.zeros((len(ar1_names)-1))
     for i, val in enumerate(ar2_values):
-        raw_left_boundary = val
+        raw_left_boundary = ar2_names[i]
         try:
             raw_right_boundary = ar2_names[i+1]
         except:
@@ -63,8 +70,13 @@ def merge_arrs(ar1_names, ar2_names, ar2_values):
                 mapped_right_boundary = ar1_names[j+1]
             except:
                 mapped_right_boundary = np.inf
+            if raw_right_boundary < raw_left_boundary:
+                temp = raw_right_boundary
+                raw_right_boundary = raw_left_boundary
+                raw_left_boundary = temp
             if overlap((raw_left_boundary, raw_right_boundary), (mapped_left_boundary, mapped_right_boundary)):
                 ar_mapped[j] += val
+                break
     return ar_mapped
 
 
