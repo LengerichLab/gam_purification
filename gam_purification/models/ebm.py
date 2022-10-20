@@ -62,30 +62,30 @@ def purify_ebm_laplace(
     )
 
 
+# TODO: Possibly update ebm.standard_deviations_
 def update_ebm(ebm, mains, mains_moved, pairs, pairs_moved, intercept, **kwargs):
     feat_names = ebm.feature_names
     ebm.intercept_ = intercept
-    for i in range(len(ebm.additive_terms_)):
-        if ebm.feature_types[i] != "interaction":
-            ebm.additive_terms_[i][1:] = mains_moved[i]
-            for bag in ebm.bagged_models_:
-                bag.model_[i][1:] += mains_moved[i] - mains[i]
+    for i in range(len(ebm.term_names_)):
+        if len(ebm.term_scores_[i].shape) == 1:  # not an interaction
+            ebm.term_scores_[i][1:-1] = mains_moved[i]
+            for bag in ebm.bagged_scores_[i]:
+                bag[1:-1] += mains_moved[i] - mains[i]
         else:
-            feat_id1 = feat_names.index(feat_names[i].split(" x ")[0])
-            feat_id2 = feat_names.index(feat_names[i].split(" x ")[1])
+            (feat_id1, feat_id2) = ebm.term_features_[i]
             try:
-                ebm.additive_terms_[i][1:, 1:] = pairs_moved[(feat_id1, feat_id2)]
-                for bag in ebm.bagged_models_:
-                    bag.model_[i][1:, 1:] += (
+                ebm.term_scores_[i][1:-1, 1:-1] = pairs_moved[(feat_id1, feat_id2)]
+                for bag in ebm.bagged_scores_[i]:
+                    bag[1:-1, 1:-1] += (
                         pairs_moved[(feat_id1, feat_id2)] - pairs[(feat_id1, feat_id2)]
                     )
             except:
-                ebm.additive_terms_[i][1:, 1:] = pairs_moved[(feat_id2, feat_id1)].T
-                for bag in ebm.bagged_models_:
+                ebm.term_scores_[i][1:-1, 1:-1] = pairs_moved[(feat_id2, feat_id1)].T
+                for bag in ebm.bagged_scores_[i]:
                     update = (
                         pairs_moved[(feat_id1, feat_id2)] - pairs[(feat_id2, feat_id1)]
                     )
-                    bag.model_[i][1:, 1:] += update.T
+                    bag[1:-1, 1:-1] += update.T
 
 
 def purify_ebm(
