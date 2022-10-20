@@ -11,9 +11,9 @@ If you would like to implement a new feature or a bug, please make sure you (or 
 1. [Fork](https://github.com/blengerich/gam_purification/fork) this repository.
 2. Make your code changes locally.
 3. Check the style using pylint and black:
-    - `pylint-badge gam_purification pylint.svg` calculates the current pylint score.
+    - `pylint-badge gam_purification pylint.svg` calculates the current pylint score (requires [pylint-badge](https://github.com/blengerich/pylint-badge)).
     - `black --check gam_purification --target-version=py38` gives a list of files to be updated by black.
-    - Picking a particular file `foo.py` from the list above, I run black `gam_purification/foo.py --target-version=py38`. This makes formatting changes to align with the Black style.
+    - Picking a particular file `foo.py` from the list above, I run `black gam_purification/foo.py --target-version=py38`. This makes formatting changes to align with the Black style.
     - Manually inspect the changes with `git diff gam_purification/foo.py`.
     - Re-run `pylint-badge gam_purification pylint.svg` to re-calculate the pylint score, and re-create a badge with that score. Sanity check that pylint score did not decrease by making style changes with black.
 4. (Optional) Include your name in alphabetical order in [ACKNOWLEDGEMENTS.md](https://github.com/blengerich/gam_purification/blob/main/ACKNOWLEDGEMENTS.md).
