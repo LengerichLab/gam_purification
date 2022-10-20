@@ -6,7 +6,7 @@ from gam_purification.utils import (
     get_feat_vals,
     plot_interaction,
     merge_arrs,
-    add_or_new
+    add_or_new,
 )
 
 # TODO: Should we return new bins for mains or just smash them together?
@@ -66,21 +66,25 @@ def update_ebm(ebm, mains, mains_moved, pairs, pairs_moved, intercept, **kwargs)
     feat_names = ebm.feature_names
     ebm.intercept_ = intercept
     for i in range(len(ebm.additive_terms_)):
-        if ebm.feature_types[i] != 'interaction':
+        if ebm.feature_types[i] != "interaction":
             ebm.additive_terms_[i][1:] = mains_moved[i]
             for bag in ebm.bagged_models_:
-                bag.model_[i][1:] += (mains_moved[i] - mains[i])
+                bag.model_[i][1:] += mains_moved[i] - mains[i]
         else:
             feat_id1 = feat_names.index(feat_names[i].split(" x ")[0])
             feat_id2 = feat_names.index(feat_names[i].split(" x ")[1])
             try:
                 ebm.additive_terms_[i][1:, 1:] = pairs_moved[(feat_id1, feat_id2)]
                 for bag in ebm.bagged_models_:
-                    bag.model_[i][1:, 1:] += pairs_moved[(feat_id1, feat_id2)] - pairs[(feat_id1, feat_id2)]
+                    bag.model_[i][1:, 1:] += (
+                        pairs_moved[(feat_id1, feat_id2)] - pairs[(feat_id1, feat_id2)]
+                    )
             except:
                 ebm.additive_terms_[i][1:, 1:] = pairs_moved[(feat_id2, feat_id1)].T
                 for bag in ebm.bagged_models_:
-                    update = pairs_moved[(feat_id1, feat_id2)] - pairs[(feat_id2, feat_id1)]
+                    update = (
+                        pairs_moved[(feat_id1, feat_id2)] - pairs[(feat_id2, feat_id1)]
+                    )
                     bag.model_[i][1:, 1:] += update.T
 
 
@@ -135,17 +139,41 @@ def purify_ebm(
     )
 
 
-def purify_and_update(ebm, use_density, dataset_name, move_name,
-    X_train=None, X_means=None, X_stds=None, laplace=0, should_transpose=True):
+def purify_and_update(
+    ebm,
+    use_density,
+    dataset_name,
+    move_name,
+    X_train=None,
+    X_means=None,
+    X_stds=None,
+    laplace=0,
+    should_transpose=True,
+):
     if X_train is not None:
         try:
             X_train = X_train.values
         except:
             pass
-    results = purify_ebm(ebm.explain_global(), use_density, dataset_name, move_name,
-        X_train=X_train, X_means=X_means, X_stds=X_stds, laplace=laplace, should_transpose=should_transpose)
-    update_ebm(ebm, results['mains'], results['mains_moved'],
-        results['pairs'], results['pairs_moved'], results['intercept'])
+    results = purify_ebm(
+        ebm.explain_global(),
+        use_density,
+        dataset_name,
+        move_name,
+        X_train=X_train,
+        X_means=X_means,
+        X_stds=X_stds,
+        laplace=laplace,
+        should_transpose=should_transpose,
+    )
+    update_ebm(
+        ebm,
+        results["mains"],
+        results["mains_moved"],
+        results["pairs"],
+        results["pairs_moved"],
+        results["intercept"],
+    )
 
 
 def purify_bivariate(
