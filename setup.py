@@ -6,13 +6,10 @@ setuptools.setup(name='gam_purification',
       install_requires=[
           'numpy',
           'scikit-learn',
-          'python-igraph',
           'matplotlib',
           'pandas',
-          'tensorflow>=2.4.0',
-          'tensorflow-addons',
           'numpy>=1.19.2',
           'ipywidgets',
-          'interpret'
+          'interpret>=0.2.0'
       ],
 )
