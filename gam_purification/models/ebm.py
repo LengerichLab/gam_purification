@@ -104,8 +104,8 @@ def purify_ebm(
             feat_id = ebm_global.feature_names.index(feat_name)
             mains[feat_id] = my_data["scores"].copy()
         elif my_data["type"] == "interaction":
-            feat_name1 = feat_name.split(" x ")[0]
-            feat_name2 = feat_name.split(" x ")[1]
+            feat_name1 = feat_name.split(" & ")[0]
+            feat_name2 = feat_name.split(" & ")[1]
             feat_id1 = ebm_global.feature_names.index(feat_name1)
             feat_id2 = ebm_global.feature_names.index(feat_name2)
             if feat_id1 < feat_id2:
