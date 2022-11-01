@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 from interpret.glassbox import ExplainableBoostingRegressor as ebr
-from .ebm import purify_ebm
+from gam_purification.models.ebm import purify_ebm
 from gam_purification.utils import calc_density
 
 

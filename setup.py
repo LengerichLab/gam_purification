@@ -17,6 +17,6 @@ setup(
       'pandas',
       'numpy>=1.19.2',
       'ipywidgets',
-      'interpret>=0.2.0'
+      'interpret'
     ],
 )
