@@ -1,7 +1,7 @@
-import setuptools
+from setuptools import setup, find_packages
 
-setuptools.setup(name='gam_purification',
-      packages=['gam_purification'],
+setup(name='gam_purification',
+      packages=find_packages(),
       version='0.0.0',
       install_requires=[
           'numpy',
