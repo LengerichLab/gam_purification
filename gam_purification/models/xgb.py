@@ -1,6 +1,6 @@
 import numpy as np
 
-from gam_purification.utils import purify_all
+from gam_purification.models.ebm import purify_all
 
 # TODO: This uses ebm_global, not XGB, binning.
 
